@@ -7,4 +7,4 @@ Script is very basic - for now, with no input functionality, and must be manuall
 
 In the tabulator, py. Edit candidates for relevant candidate numbers and ex-list to change order of eliminated candidates. 
 
-In both, the C:\\Path\\to\\file must be changed to your file location.
+In both, the C:\\\Path\\\to\\\file must be changed to your file location.
