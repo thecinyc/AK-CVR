@@ -389,13 +389,6 @@ print(f"\nRound {i + 1} Votes:\n"
       f"Total = {total[i]}\n"
       )
 
-# Author: @cinyc9
-# Date: January 8, 2023
-# Version: 1
-# Purpose: Parse Alaskan CVR csv
-
-import csv
-
 candidates = candidates_string
 # ['465', '463', '464', '468', ''] - HD-40
 # ['539', '538', '548', '553', '502'] - HD-36
