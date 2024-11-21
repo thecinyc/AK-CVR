@@ -1,18 +1,18 @@
 # Author: @cinyc9
-# Date: November 17, 2024
-# Version: 2
-# Purpose: Converts Alaskan CVR into Marks for Rounds 1-5
-# Note: Must Edit 6 //Path//to//File references before running the first time for your file system
+# Date: November 20, 2024
+# Version: 3
+# Purpose: Converts Alaskan CVR into Marks for Rounds 1-5; Corrects error to remove Invalid Contest Ballots (Outstack Condition 7)
+# Note: Must Edit 6 C:\\Path\\to\\Files references before running the first time for your file system
 
 import json, csv
 #Change these variables for your particular race
 race = 'AK-AL' # Race Name to be Saved
 version = '1' # Version Number - change if don't want to save over old
-cvr_folder = "CVR_Export_20241116163039" # Name of AK CVR Folder
+cvr_folder = "CVR_Export_20241120180714" # Name of AK CVR Folder
 cid = 7 # Your Contest IDs here
-candidates = [517, 518, 520, 552, 476] # Candidate List for AK-AL; Change to your race
+candidates = [517, 518, 520, 552, 476]  # Candidate List for AK-AL; Change to your race
 ex_list = ['undervote', '476', '552', '520'] # List of candidates in order of elimination, starting with overvote
-num_CVR_files = 1900 #number of CVR files in folder
+num_CVR_files = 2000 #number of CVR files in folder
 
 
 candidates_string = []
@@ -173,6 +173,11 @@ def other_rounds(texts, candidates, candidate_count, rank, level):
                 if 9 in outstack:
                     candidate_count = count_votes('overvote', candidates, candidate_count, level)
                     rank[level] = 'overvote'
+
+                elif 7 in outstack:
+                    print('Invalid Contest!')
+                    candidate_count = count_votes("invalid_contest", candidates, candidate_count, level)
+                    # rank[level] = 'invalid_contest'
                 elif not ambig:
                     candidate_count = count_votes(marks_1, candidates, candidate_count, level)
                     rank[level] = marks_1
@@ -233,6 +238,10 @@ def next_mark(texts, candidates, candidate_count, rank, level, tlevel, temp=[]):
             if 9 in outstack:
                 candidate_count = count_votes('overvote', candidates, candidate_count, level)
                 rank[level] = 'overvote'
+            elif 7 in outstack:
+                print("Invalid Contest")
+                candidate_count= count_votes("invalid_contest", candidates, candidate_count, level)
+                rank[level] = 'invalid_contest'
             elif not ambig:
                 candidate_count = count_votes(marks_1, candidates, candidate_count, level)
                 rank[level] = marks_1
@@ -247,13 +256,13 @@ def next_mark(texts, candidates, candidate_count, rank, level, tlevel, temp=[]):
 
     return candidate_count
 
-with open(f'C:\\Path\\to\\File\\{race} Marks {version}.csv', 'w', newline='') as csvfile:
+with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile, dialect="excel")
-    writer.writerow(['Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5','Precinct'])
+    writer.writerow(['Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5','Precinct','Json Number','Record Number'])
 
     for i in range(num_CVR_files):
         try:
-            with open(f'C:\\Path\\to\\File\\{cvr_folder}\\CvrExport_{i}.json', 'r') as file:
+            with open(f'C:\\Path\\to\\Files\\{cvr_folder}\\CvrExport_{i}.json', 'r') as file:
                 contents = json.load(file)
                 sessions = len(contents['Sessions'])
                 for session in range(sessions):
@@ -278,10 +287,12 @@ with open(f'C:\\Path\\to\\File\\{race} Marks {version}.csv', 'w', newline='') as
                                 if contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]['Id'] == cid:
                                     cards = contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]
                                     precinct = contents['Sessions'][session]['Original']["PrecinctPortionId"]
+                                    recordId = contents['Sessions'][session]['RecordId']
 
                                     candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0, 0)
                                     row_to_write.append(precinct)
                                     row_to_write.append(f"{i}-{session}")
+                                    row_to_write.append(recordId)
                                     writer.writerow(row_to_write)
                                     candidate_count[0][5] += 1
 
@@ -292,21 +303,25 @@ with open(f'C:\\Path\\to\\File\\{race} Marks {version}.csv', 'w', newline='') as
                             if contents['Sessions'][session]['Modified']['Cards'][0]['Contests'][contest]['Id'] == cid:
                                 cards = contents['Sessions'][session]['Modified']['Cards'][0]['Contests'][contest]
                                 precinct = contents['Sessions'][session]['Modified']["PrecinctPortionId"]
+                                recordId = contents['Sessions'][session]['RecordId']
 
                                 candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0,
                                                                               rank_0, 0)
                                 row_to_write.append(precinct)
                                 row_to_write.append(f"{i}-{session}")
+                                row_to_write.append(recordId + "Modified")
                                 writer.writerow(row_to_write)
                                 candidate_count[0][5] += 1
-                                precinct = contents['Sessions'][session]['Modified']["PrecinctPortionId"]
-                                candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0, 0)
-                                row_to_write.append(precinct)
-                                row_to_write.append(f"{i}-{session}")
-                                writer.writerow(row_to_write)
-                                candidate_count[1][5] += 1
-                                if precinct == 380:
-                                    print("Ambler")
+                        else:
+                            cards = contents['Sessions'][session]['Modified']['Cards'][0]['Contests'][contest]
+                            precinct = contents['Sessions'][session]['Modified']["PrecinctPortionId"]
+                            recordId = contents['Sessions'][session]['RecordId']
+                            candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0, 0)
+                            row_to_write.append(precinct)
+                            row_to_write.append(f"{i}-{session}")
+                            row_to_write.append(recordId + "Modified")
+                            writer.writerow(row_to_write)
+                            candidate_count[1][5] += 1
         except:
             print(f"File {i} Missing!")
 
@@ -671,26 +686,26 @@ def change_rank(skip_rank, rank, the_list, level):
 
 
 try:
-    open(f'C:\\Path\\to\\File\\{race} Computation {version}.csv', 'w', newline='')
+    open(f'C:\\Path\\to\\Files\\{race} Computation {version}.csv', 'w', newline='')
 
 except:
 
     print("File is locked for use or folder doesn't exist'!")
 
 else:
-    with open(f'C:\\Path\\to\\File\\{race} Computation {version}.csv', 'w', newline='') as csvfile:
+    with open(f'C:\\Path\\to\\Files\\{race} Computation {version}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect="excel")
         writer.writerow(['Precinct','Round 1', 'Round 2', 'Round 3', 'Round 4','ID'])
 
         try:
-            open(f'C:\\Path\\to\\File\\{race} Marks {version}.csv', 'r')
+            open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'r')
 
         except:
             print("File not found! Please check path!")
 
         else:
             print("Computing ranks...")
-            with open(f'C:\\Path\\to\\File\\{race} Marks {version}.csv', 'r') as file:
+            with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'r') as file:
                 contents = csv.reader(file)
                 for row in contents:
                     rank_row = row
