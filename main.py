@@ -1,19 +1,30 @@
-# Author: @cinyc9
+# Author: @cinyc9 and RCVRC
+# Modified version of script originally obtained from @cinyc9 at
+#   https://github.com/thecinyc/AK-CVR/blob/master/AK%20CVR%20Ripper%202.py
 # Date: November 20, 2024
 # Version: 3
-# Purpose: Converts Alaskan CVR into Marks for Rounds 1-5; Corrects error to remove Invalid Contest Ballots (Outstack Condition 7)
-# Note: Must Edit 6 C:\\Path\\to\\Files references before running the first time for your file system
+# Purpose: Converts Alaskan CVR into Marks for Rounds 1-5; Corrects error to remove Invalid Contest Ballots (Outstack
+#   Condition 7)
+#
+#
+# Note: Must Edit path_to_alaska_dominion_cvrs and path_to_output_cinyc_files references before running the first time
+#   for your
+# file system (assumes Unix-based system)
 
 import json, csv
-#Change these variables for your particular race
-race = 'AK-AL' # Race Name to be Saved
-version = '1' # Version Number - change if don't want to save over old
-cvr_folder = "CVR_Export_20241120180714" # Name of AK CVR Folder
-cid = 7 # Your Contest IDs here
-candidates = [517, 518, 520, 552, 476]  # Candidate List for AK-AL; Change to your race
-ex_list = ['undervote', '476', '552', '520'] # List of candidates in order of elimination, starting with overvote
-num_CVR_files = 2000 #number of CVR files in folder
 
+# Change these variables for your particular race
+race = 'AK-AL'  # Race Name to be Saved
+version = '1'  # Version Number - change if don't want to save over old
+cid = 7  # Your Contest IDs here
+candidates = [517, 518, 520, 552, 476]  # Candidate List for AK-AL; Change to match your race
+ex_list = ['undervote', '476', '552', '520']  # List of candidates in order of elimination, starting with overvote
+num_CVR_files = 2000  # number of CVR files in folder
+# these path examples are for Windows; use something like '/path/to/files/' for Unix-based systems
+path_to_alaska_dominion_cvrs = \
+    'C:\\Path\\to\\Dominion\\CVR\\Files\\'
+path_to_output_cinyc_files = \
+    'C:\\Path\\to\\Output\\Files\\'
 
 candidates_string = []
 for item in candidates:
@@ -76,6 +87,7 @@ candidate_count_0 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
 
 def count_votes(marks, candidate, candidate_count, level=0):
     """Counts votes"""
@@ -145,7 +157,6 @@ def compute_round(texts, candidates, candidate_count, rank, level):
     candidate_count = other_rounds(texts, candidates, candidate_count, rank, 3)
     candidate_count = other_rounds(texts, candidates, candidate_count, rank, 4)
 
-
     return candidate_count, rank
 
 
@@ -185,8 +196,8 @@ def other_rounds(texts, candidates, candidate_count, rank, level):
                     candidate_count = next_mark(texts, candidates, candidate_count, rank, level, 1, temp)
             else:
                 if ranks > level + 1:
-                        candidate_count = count_votes('undervote', candidates, candidate_count, level)
-                        rank[level] = 'undervote'
+                    candidate_count = count_votes('undervote', candidates, candidate_count, level)
+                    rank[level] = 'undervote'
                 else:
                     candidate_count = next_mark(texts, candidates, candidate_count, rank, level, 1, temp)
 
@@ -225,8 +236,8 @@ def next_mark(texts, candidates, candidate_count, rank, level, tlevel, temp=[]):
     try:
         texts['Marks'][tlevel]
     except:
-      candidate_count = count_votes('undervote', candidates, candidate_count, level)
-      rank[level] = 'undervote'
+        candidate_count = count_votes('undervote', candidates, candidate_count, level)
+        rank[level] = 'undervote'
     else:
         ranks = texts['Marks'][tlevel]['Rank']
         ambig = texts['Marks'][tlevel]['IsAmbiguous']
@@ -240,7 +251,7 @@ def next_mark(texts, candidates, candidate_count, rank, level, tlevel, temp=[]):
                 rank[level] = 'overvote'
             elif 7 in outstack:
                 print("Invalid Contest")
-                candidate_count= count_votes("invalid_contest", candidates, candidate_count, level)
+                candidate_count = count_votes("invalid_contest", candidates, candidate_count, level)
                 rank[level] = 'invalid_contest'
             elif not ambig:
                 candidate_count = count_votes(marks_1, candidates, candidate_count, level)
@@ -256,13 +267,14 @@ def next_mark(texts, candidates, candidate_count, rank, level, tlevel, temp=[]):
 
     return candidate_count
 
-with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'w', newline='') as csvfile:
+
+with open(f'{path_to_output_cinyc_files}{race}-marks-{version}.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile, dialect="excel")
-    writer.writerow(['Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5','Precinct','Json Number','Record Number'])
+    writer.writerow(['Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5', 'Precinct', 'Json Number', 'Record Number'])
 
     for i in range(num_CVR_files):
         try:
-            with open(f'C:\\Path\\to\\Files\\{cvr_folder}\\CvrExport_{i}.json', 'r') as file:
+            with open(f'{path_to_alaska_dominion_cvrs}CvrExport_{i}.json', 'r') as file:
                 contents = json.load(file)
                 sessions = len(contents['Sessions'])
                 for session in range(sessions):
@@ -276,7 +288,8 @@ with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'w', newline='') a
                             cards = contents['Sessions'][session]['Original']['Cards'][0]['Contests']
                             contests = len(cards)
                             for contest in range(contests):
-                                if contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]['Id'] == cid:
+                                if contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest][
+                                    'Id'] == cid:
                                     cards = contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]
                         except:
                             pass
@@ -284,12 +297,14 @@ with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'w', newline='') a
                             cards = contents['Sessions'][session]['Original']['Cards'][0]['Contests']
                             contests = len(cards)
                             for contest in range(contests):
-                                if contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]['Id'] == cid:
+                                if contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest][
+                                    'Id'] == cid:
                                     cards = contents['Sessions'][session]['Original']['Cards'][0]['Contests'][contest]
                                     precinct = contents['Sessions'][session]['Original']["PrecinctPortionId"]
                                     recordId = contents['Sessions'][session]['RecordId']
 
-                                    candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0, 0)
+                                    candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0,
+                                                                                  rank_0, 0)
                                     row_to_write.append(precinct)
                                     row_to_write.append(f"{i}-{session}")
                                     row_to_write.append(recordId)
@@ -316,7 +331,8 @@ with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'w', newline='') a
                             cards = contents['Sessions'][session]['Modified']['Cards'][0]['Contests'][contest]
                             precinct = contents['Sessions'][session]['Modified']["PrecinctPortionId"]
                             recordId = contents['Sessions'][session]['RecordId']
-                            candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0, 0)
+                            candidate_count, row_to_write = compute_round(cards, candidates, candidate_count_0, rank_0,
+                                                                          0)
                             row_to_write.append(precinct)
                             row_to_write.append(f"{i}-{session}")
                             row_to_write.append(recordId + "Modified")
@@ -446,6 +462,7 @@ candidate_count_0 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
+
 def count_votes(marks, candidate, candidate_count, level=0):
     """Counts votes"""
     if marks == candidate[0]:
@@ -472,7 +489,7 @@ def count_votes(marks, candidate, candidate_count, level=0):
     elif marks == 'overvote':
         candidate_count[7][level] += 1
     else:
-        candidate_count[8][level] +=1
+        candidate_count[8][level] += 1
 
     return candidate_count
 
@@ -498,13 +515,10 @@ def compute_round(the_row, candidates, candidate_count, ex_list, level=0, ):
     skip_rank[5] = the_row[4]
     skip_rank[6] = the_row[6]
 
-
     replace_level(skip_rank)
 
     check_double_skips(rank, skip_rank, ex_list[:1], 0)
     candidate_count = count_votes(rank[1], candidates, candidate_count, 0)
-
-
 
     check_double_skips(rank, skip_rank, ex_list[:2], 1)
     candidate_count = count_votes(rank[2], candidates, candidate_count, 1)
@@ -522,9 +536,9 @@ def replace_level(skip_rank):
     """Replaces undervotes and duplicate candidate ranks with word skipped"""
 
     for i in range(4):
-        for item in skip_rank[1:i+2]:
+        for item in skip_rank[1:i + 2]:
             if (skip_rank[i + 2] == item and skip_rank[i + 2] != 'overvote' and
-                skip_rank[i + 2] != 'undervote' and skip_rank[i + 2] != 'blank'):
+                    skip_rank[i + 2] != 'undervote' and skip_rank[i + 2] != 'blank'):
                 skip_rank[i + 2] = 'skipped'
 
     for j in range(5):
@@ -610,7 +624,6 @@ def remove_initial_skip(skip_rank, the_list):
         skip_rank[3] = skip_rank[4]
         skip_rank[4] = skip_rank[5]
 
-
         if skip_rank[1] in the_list:
             skipped = False
             skip_rank[1] = skip_rank[2]
@@ -686,26 +699,26 @@ def change_rank(skip_rank, rank, the_list, level):
 
 
 try:
-    open(f'C:\\Path\\to\\Files\\{race} Computation {version}.csv', 'w', newline='')
+    open(f'{path_to_output_cinyc_files}{race}-computation-{version}.csv', 'w', newline='')
 
 except:
 
     print("File is locked for use or folder doesn't exist'!")
 
 else:
-    with open(f'C:\\Path\\to\\Files\\{race} Computation {version}.csv', 'w', newline='') as csvfile:
+    with open(f'{path_to_output_cinyc_files}{race}-computation-{version}.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect="excel")
-        writer.writerow(['Precinct','Round 1', 'Round 2', 'Round 3', 'Round 4','ID'])
+        writer.writerow(['Precinct', 'Round 1', 'Round 2', 'Round 3', 'Round 4', 'ID'])
 
         try:
-            open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'r')
+            open(f'{path_to_output_cinyc_files}{race}-marks-{version}.csv', 'r')
 
         except:
             print("File not found! Please check path!")
 
         else:
             print("Computing ranks...")
-            with open(f'C:\\Path\\to\\Files\\{race} Marks {version}.csv', 'r') as file:
+            with open(f'{path_to_output_cinyc_files}{race}-marks-{version}.csv', 'r') as file:
                 contents = csv.reader(file)
                 for row in contents:
                     rank_row = row
@@ -714,16 +727,26 @@ else:
                     else:
                         rank_2, candidate_count_1 = compute_round(rank_row, candidates, candidate_count_0, ex_list, 0)
                         writer.writerow(rank_2)
-            total[0] = (candidate_count_1[1][0] + candidate_count_1[2][0] + candidate_count_1[3][0] + candidate_count_1[4][0] +
-                        candidate_count_1[5][0] + candidate_count_1[0][0] + candidate_count_1[6][0] + candidate_count_1[7][0])
-            total[1] = candidate_count_1[1][1] + candidate_count_1[2][1] + candidate_count_1[3][1] + candidate_count_1[4][1] + \
-                       candidate_count_1[5][1] + candidate_count_1[0][1] + candidate_count_1[6][1] + candidate_count_1[7][1]
-            total[2] = candidate_count_1[1][2] + candidate_count_1[2][2] + candidate_count_1[3][2] + candidate_count_1[4][2] + \
-                       candidate_count_1[5][2] + candidate_count_1[0][2] + candidate_count_1[6][2] + candidate_count_1[7][2]
-            total[3] = candidate_count_1[1][3] + candidate_count_1[2][3] + candidate_count_1[3][3] + candidate_count_1[4][3] + \
-                       candidate_count_1[5][3] + candidate_count_1[0][3] + candidate_count_1[6][3] + candidate_count_1[7][3]
-            total[4] = candidate_count_1[1][4] + candidate_count_1[2][4] + candidate_count_1[3][4] + candidate_count_1[4][4] + \
-                       candidate_count_1[5][4] + candidate_count_1[0][4] + candidate_count_1[6][4] + candidate_count_1[7][4]
+            total[0] = (candidate_count_1[1][0] + candidate_count_1[2][0] + candidate_count_1[3][0] +
+                        candidate_count_1[4][0] +
+                        candidate_count_1[5][0] + candidate_count_1[0][0] + candidate_count_1[6][0] +
+                        candidate_count_1[7][0])
+            total[1] = candidate_count_1[1][1] + candidate_count_1[2][1] + candidate_count_1[3][1] + \
+                       candidate_count_1[4][1] + \
+                       candidate_count_1[5][1] + candidate_count_1[0][1] + candidate_count_1[6][1] + \
+                       candidate_count_1[7][1]
+            total[2] = candidate_count_1[1][2] + candidate_count_1[2][2] + candidate_count_1[3][2] + \
+                       candidate_count_1[4][2] + \
+                       candidate_count_1[5][2] + candidate_count_1[0][2] + candidate_count_1[6][2] + \
+                       candidate_count_1[7][2]
+            total[3] = candidate_count_1[1][3] + candidate_count_1[2][3] + candidate_count_1[3][3] + \
+                       candidate_count_1[4][3] + \
+                       candidate_count_1[5][3] + candidate_count_1[0][3] + candidate_count_1[6][3] + \
+                       candidate_count_1[7][3]
+            total[4] = candidate_count_1[1][4] + candidate_count_1[2][4] + candidate_count_1[3][4] + \
+                       candidate_count_1[4][4] + \
+                       candidate_count_1[5][4] + candidate_count_1[0][4] + candidate_count_1[6][4] + \
+                       candidate_count_1[7][4]
 
             i = 0
             print(f"\nRound {i + 1} Votes:\n"
@@ -740,8 +763,10 @@ else:
 
             print("Allocating Write_ins...")
 
-            total[1] = candidate_count_1[1][1] + candidate_count_1[2][1] + candidate_count_1[3][1] + candidate_count_1[4][1] + \
-                       candidate_count_1[5][1] + candidate_count_1[0][1] + candidate_count_1[6][1] + candidate_count_1[7][1]
+            total[1] = candidate_count_1[1][1] + candidate_count_1[2][1] + candidate_count_1[3][1] + \
+                       candidate_count_1[4][1] + \
+                       candidate_count_1[5][1] + candidate_count_1[0][1] + candidate_count_1[6][1] + \
+                       candidate_count_1[7][1]
 
             i = 1
             print(f"\nRound {i + 1} Votes:\n"
@@ -756,8 +781,10 @@ else:
                   f"Total = {total[i]}\n"
                   )
 
-            total[2] = candidate_count_1[1][2] + candidate_count_1[2][2] + candidate_count_1[3][2] + candidate_count_1[4][2] + \
-                       candidate_count_1[5][2] + candidate_count_1[0][2] + candidate_count_1[6][2] + candidate_count_1[7][2]
+            total[2] = candidate_count_1[1][2] + candidate_count_1[2][2] + candidate_count_1[3][2] + \
+                       candidate_count_1[4][2] + \
+                       candidate_count_1[5][2] + candidate_count_1[0][2] + candidate_count_1[6][2] + \
+                       candidate_count_1[7][2]
 
             i = 2
             print(f"\nRound {i + 1} Votes:\n"
@@ -772,8 +799,10 @@ else:
                   f"Total = {total[i]}\n"
                   )
 
-            total[3] = candidate_count_1[1][3] + candidate_count_1[2][3] + candidate_count_1[3][3] + candidate_count_1[4][3] + \
-                       candidate_count_1[5][3] + candidate_count_1[0][3] + candidate_count_1[6][3] + candidate_count_1[7][3]
+            total[3] = candidate_count_1[1][3] + candidate_count_1[2][3] + candidate_count_1[3][3] + \
+                       candidate_count_1[4][3] + \
+                       candidate_count_1[5][3] + candidate_count_1[0][3] + candidate_count_1[6][3] + \
+                       candidate_count_1[7][3]
 
             i = 3
             print(f"\nRound {i + 1} Votes:\n"

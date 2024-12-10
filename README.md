@@ -6,8 +6,7 @@ Code to parse AK Cast Vote Records.
 Clone the repository by running:
 
 ```shell
-# TODO: update the URL once a repo in GitHub is available
-git clone https://github.com/BrightSpots/repo-to-clone.git
+git clone https://github.com/nurse-the-code/cinyc-ak-cvr-tabulator-2024.git
 ```
 
 ### Installing Dependencies
@@ -24,9 +23,9 @@ poetry install
 poetry run python main.py
 ```
 
-This runs the main.py script, which convert AK json files(s) to 2 csvs - Marks and Computation. Edit lines 9-15 to reflect the race you want to compute.
+This runs the `main.py` script, which convert AK json files(s) to 2 csvs - Marks and Computation. Edit lines 16-27 to reflect the race you want to compute.
 
-Note: 6 C:\\\Path\\\to\\\Files must be changed to your file location.
+Note: `path_to_alaska_dominion_cvrs` and `path_to_output_cinyc_files` must be changed to your file location.
 
 Script is very basic - for now, with no input functionality, and must be manually changed for each race.
 
