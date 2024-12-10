@@ -1,0 +1,8 @@
+# IDE files
+.idea/
+
+# Compiled files
+__pycache__/
+
+# OS files
+.DS_Store

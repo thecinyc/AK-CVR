@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "cinyc-ak-cvr-tabulator-2024-rcvrc-fork"
+version = "0.1.0"
+description = ""
+authors = ["thecinyc <47411687+thecinyc@users.noreply.github.com>","Ranked Choice Voting Resource Center <68450431+nurse-the-code@users.noreply.github.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
